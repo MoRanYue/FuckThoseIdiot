@@ -2,10 +2,14 @@
 // @name         Fuck Those Idiot
 // @namespace    http://tampermonkey.net/
 // @version      0.1.4
-// @description  Block bullets, comments, video, users which those idiot posted on Bilibili
+// @description  Block bullets, comments, video which those idiot posted on Bilibili
 // @author       MoRanYue
 // @license      MIT
-// @match        *://www.bilibili.com/*
+// @downloadURL  https://github.com/MoRanYue/FuckThoseIdiot/raw/main/FuckThoseIdiot.user.js
+// @updateURL    https://github.com/MoRanYue/FuckThoseIdiot/raw/main/FuckThoseIdiot.user.js
+// @supportURL   https://github.com/MoRanYue/FuckThoseIdiot/issues
+// @match        *://*.bilibili.com/*
+// @exclude      *://api.bilibili.com, *://data.bilibili.com
 // @icon         https://www.bilibili.com/favicon.ico
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
