@@ -23,14 +23,16 @@
     'use strict';
 
     // Override attachShadow() to avoid #shadow-root (closed) some day
-    Element.prototype._attachShadow = Element.prototype.attachShadow;
-    Element.prototype.attachShadow = function () {
-        return this._attachShadow({ mode: "open" });
-    };
+    let _attachShadow = Element.prototype.attachShadow
+    Element.prototype.attachShadow = function (...args) {
+    args[0].mode = "open";
+    return _attachShadow.call(this, ...args);
+    }
 
     const OPTIONS = {
         filter: {
             replaceBlockingWordsToSymbols: true,
+            allowForceHideBlockedContent: true,
             doNotLookAnyComment: false,
             doNotLookAnyBullets: false,
         }
@@ -522,6 +524,7 @@
                 if (player) {
                     if (OPTIONS.filter.doNotLookAnyBullet) {
                         player.querySelector(".bpx-player-row-dm-wrap").remove()
+                        player.querySelector(".bpx-player-sending-area").remove()
                         return
                     }
                     bulletObserver.observe(player, { childList: true, subtree: true });
