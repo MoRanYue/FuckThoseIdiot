@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fuck Those Idiot
 // @namespace    http://tampermonkey.net/
-// @version      0.3.0
+// @version      0.4.1
 // @description  Block UGC which those idiot you hate posted
 // @author       MoRanYue
 // @license      MIT
@@ -590,7 +590,7 @@
             const title = document.createElement("h3")
             title.appendChild(document.createTextNode(LOCALES.settings.title))
             const exitBtn = document.createElement("button")
-            exitBtn.appendChild(document.createTextNode("×"))
+            exitBtn.appendChild(FtiMenu.createIcon("x"))
             exitBtn.onclick = () => this.hide()
 
             titleCont.appendChild(title)
@@ -600,6 +600,12 @@
 
             document.body.appendChild(this.menu)
             this.hide()
+        }
+
+        static createIcon(name) {
+            const icon = document.createElement("i")
+            icon.className = "bi-" + name
+            return icon
         }
 
         show() {
@@ -698,6 +704,8 @@
 
         // Attach CSS
         const style = `
+            @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css");
+
             .${CLASSNAME_FLAGS.blockedComment} {
                 display: none !important;
             }
@@ -716,8 +724,8 @@
                 position: fixed;
                 top: 0;
                 left: 0;
-                background-color: rgba(255, 255, 255, 0.6);
-                backdrop-filter: brightness(0.75) blur(30px);
+                background-color: rgba(168, 168, 168, 0.6);
+                backdrop-filter: blur(30px);
                 width: 25%;
                 height: 65%;
                 border-radius: 12px;
@@ -734,12 +742,30 @@
                 cursor: move;
                 display: flex;
                 align-items: center;
+                user-select: none;
             }
             .${CLASSNAME_FLAGS.titleCont} h3 {
                 font-size: 1.4rem;
                 margin: 0;
-                user-select: none;
                 flex-grow: 1;
+            }
+            .${CLASSNAME_FLAGS.titleCont} button {
+                color: black;
+                padding: 4px;
+                width: 2.4em;
+                height: 2.4em;
+                border-radius: 50%;
+                transition-duration: 0.2s;
+                background-color: transparent;
+            }
+            .${CLASSNAME_FLAGS.titleCont} button i {
+                font-size: 1.2rem;
+            }
+            .${CLASSNAME_FLAGS.titleCont} button:hover {
+                background-color: rgba(255, 255, 255, 0.6);
+            }
+            .${CLASSNAME_FLAGS.titleCont} button:active {
+                background-color: rgba(255, 255, 255, 0.85);
             }
         `
         let styleElem = document.createElement("style");
