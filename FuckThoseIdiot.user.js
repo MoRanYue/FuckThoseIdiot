@@ -2,7 +2,7 @@
 // @name         Fuck Those Idiot
 // @namespace    http://tampermonkey.net/
 // @version      0.4.1
-// @description  Block UGC which those idiot you hate posted
+// @description  Block UGC which those idiots you hate and feel annoying posted
 // @author       MoRanYue
 // @license      MIT
 // @downloadURL  https://github.com/MoRanYue/FuckThoseIdiot/raw/main/FuckThoseIdiot.user.js
@@ -31,16 +31,6 @@
         return _attachShadow.call(this, ...args);
     }
 
-    const OPTIONS = {
-        bilibili: {
-            filter: {
-                replaceBlockingWordsToSymbols: true, // Only for comments, other UGC (such as video, game addons) will still being hidden
-                doNotLookAnyComment: false,
-                doNotLookAnyBullet: false,
-            }
-        }
-    }
-
     const STATES = {
         filtering: false
     }
@@ -51,11 +41,21 @@
         blockingTip: "fti-blocking-tip",
 
         menu: "fti-menu",
-        titleCont: "fti-title"
+        titleCont: "fti-title",
+        menuContent: "fti-content",
+        optionSection: "fti-option-section",
+        switchOption: "fti-switch-option",
+        textOption: "fti-text-option"
     }
     const LOCALES = {
         settings: {
-            title: "FuckThoseIdiot"
+            title: "FuckThoseIdiot",
+            replaceBlockingWordsToSymbols: "仅屏蔽匹配的文本",
+            replaceBlockingWordsToSymbolsDesc: "当开启时，若用户发布的评论中检测到应被屏蔽的文本，不再整个评论完全隐藏，而是仅替换被屏蔽内容为“*”字符。",
+            commentBlockingWords: "评论屏蔽词",
+            bulletBlockingWords: "弹幕屏蔽词",
+            yes: "是",
+            no: "否"
         },
         bilibili: {
             commentBlockingTip: "该评论已经过屏蔽处理",
@@ -69,133 +69,194 @@
         unknown: "unknown"
     }
 
-    const BLOCKING_WORDS = {
-        bilibili: {
-            comments: [
-                /[他它她你tn][吗嘛码妈玛马m]/,
-                /[傻杀沙啥煞砂煞鲨2s][逼比币哔笔b]/,
-                /就[是像向象]?(依托|一?坨)([屎使石史]|答辩|大便)/,
-                /([机鸡几集寄])(\1|[把吧八8巴霸扒])/,
-                /[吃赤][屎石实史]/,
-                /[草操艹去糙日囸c][他它她你tn][吗嘛码妈玛马m]/,
-                /如果(其[它他她]|别)人没.*那么请问.*谁知道?你/,
-                /并?不是知道?错.*而是知道?自己[快要将]要?死了?/,
-                /饭圈化?/,
-                /经典的?自以为是/,
-                /凭什么[他她它].*我?们?[就便]?要[体原]谅[？\?]?/,
-                "通用模板",
-                /素质(令人)?堪忧/,
-                /(强行)?([带搞].*节奏|引战)/,
-                /[神蛇深][经井][病冰]/,
-                /(去|弄|必须)死|杀了[你我他她它泥尼拟]|死.{0,2}(爸|妈|爹|娘|全家|户口本)|司马$/,
-                /[键件剑贱建见]人/,
-                /^\[.+\]$/, // 单个表情
-                /又蠢又坏(说的)?就?是这[种样]/,
-                /(感觉|我?认为)(真的|就是)唐/,
-                /我?(就是)?[在再]攻击[她他它]/,
-                /[一亿义][眼看](就是)?ai/,
-                /(无脑的?)?(喷子|键盘侠)/,
-                /不是?.*[而却]是[， ](拉满了)+/,
-                /(简直)?无敌了/,
-                "黄昏见证虔诚的信徒",
-                "巅峰产生虚伪的拥护",
-                /节奏(不[断停]|很?大)/,
-                /戾气好?重/,
-                /[铭鸣][式试]|.+只需?[要用].+[就便]可以了.{1,3}但.+需?要?考虑的?就多了/,
-                /魔怔是?吧/
-            ],
-            bullets: [
-                /([好豪太][烫热早])+/,
-                /^([来看好]|这么)[早完晚]了?/,
-                /^.$/,
-                /^(好?[烫冷凉热]+手?|热乎)$/,
-                /^第[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+个?[看康][玩丸完]/,
-                /[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几半Ww]+([秒妙]钟?|分钟?|小?时|[日天月年])之?前/,
-                /[前钱]排/,
-                /(暂停|截图)(成功|失败|学表情)/,
-                "我?出息了.?",
-                "前来考古",
-                /热[一1①１]?热还能吃/,
-                /^刚刚$/,
-                /^(最|比?较)([早晚爱]|喜欢)的?[一1①１][集次期].?/,
-                /^[<《]?[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[》>]?$/,
-                /^[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[个的号]?(人|粉丝|硬?币|点?赞|)?$/,
-                /[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[个的号]?(人|粉丝?)?([在再]看|(你们|大家)好|合影|(给我)?出来|和我看|(别|不要再?)躲了)/,
-                /(\u25e3\u25e5)+(danger|drangr)?/, // ◣◥WARNING
-                /^借[你您]吉言$/,
-                /此生无悔|来世[愿原]做/,
-                /^(你品)?.?你细?品$/,
-                /^[Oo][Hh]{2,}$/,
-                /空[平瓶屏贫凭]/,
-                /点点?举[报办]/,
-                "下次一定",
-                "弹幕礼仪",
-                "热乎",
-                "保护",
-                /(请|不[愿想]看)([滚滾]|撤退?|离开|右上角?)|散了吧?|洗洗睡|不喜欢(别|不要)/,
-                /^(求|祝|保佑).*[考上].*|保佑.*[我前不挂]$/,
-                /引战|闭嘴|打脸|素质|[键鍵][盘盤](侠|大手|斗士|[黨党])|喷子|吵架|[撕逼][逼b]/,
-                /[神蛇深][经井][病冰]/,
-                /[火][前钳]|[流留刘][名铭明]|要火|万火留/,
-                "^前方高能$",
-                "假高能",
-                "mdzz",
-                /智[商障]/,
-                /(去|弄|必须)死|杀了[你我他她它泥尼拟]|死.{0,2}(爸|妈|爹|娘|全家|户口本)|司马$/,
-                /[由有]我(来){0,}[组租]成/,
-                /是(精日|日杂|汉[奸J])/,
-                /^(.+[—\-_]+)+$/,
-                /完结.*[撒撤散]花/,
-                /某些?人|有些人/, // 讽刺隐喻
-                /非战斗人员.*迅速撤离|fbi ?warning/,
-                /这不是演习[，,！!]/,
-                "小鬼",
-                "跳街舞",
-                /ጿ(\s?)ኈ\1ቼ\1ዽ\1ጿ\1/,
-                /高能(列车|[均军君菌])/,
-                "架好机枪，准备战斗",
-                "▄︻┻┳═一",
-                /■{3,}/,
-                "屏蔽词"
-            ],
-            videoTitle: []
-        },
-        steam: {
-            community: {
-                workshop: {
-                    title: [],
-                    description: [],
-                    comments: []
-                }
+    class OptionManager {
+        getDefaultConfig(platform) {
+            switch (platform) {
+                case SUPPORTED_PLATFORMS.bilibili:
+                    return {
+                        filter: {
+                            replaceBlockingWordsToSymbols: true, // Only for comments, other UGC (such as video, game addons) will still being hidden
+                            doNotLookAnyComment: false,
+                            doNotLookAnyBullet: false,
+                            blockingWords: {
+                                comments: [
+                                    /[他它她你tn][吗嘛码妈玛马m]/,
+                                    /[傻杀沙啥煞砂煞鲨2s][逼比币哔笔b]/,
+                                    /就[是像向象]?(依托|一?坨)([屎使石史]|答辩|大便)/,
+                                    /([机鸡几集寄])(\1|[把吧八8巴霸扒])/,
+                                    /[吃赤][屎石实史]/,
+                                    /[草操艹去糙日囸c][他它她你tn][吗嘛码妈玛马m]/,
+                                    /如果(其[它他她]|别)人没.*那么请问.*谁知道?你/,
+                                    /并?不是知道?错.*而是知道?自己[快要将]要?死了?/,
+                                    /饭圈化?/,
+                                    /经典的?自以为是/,
+                                    /凭什么[他她它].*我?们?[就便]?要[体原]谅[？\?]?/,
+                                    "通用模板",
+                                    /素质(令人)?堪忧/,
+                                    /(强行)?([带搞].*节奏|引战)/,
+                                    /[神蛇深][经井][病冰]/,
+                                    /(去|弄|必须)死|杀了[你我他她它泥尼拟]|死.{0,2}(爸|妈|爹|娘|全家|户口本)|司马$/,
+                                    /[键件剑贱建见]人/,
+                                    /^\[.+\]$/, // 单个表情
+                                    /又蠢又坏(说的)?就?是这[种样]/,
+                                    /(感觉|我?认为)(真的|就是)唐/,
+                                    /我?(就是)?[在再]攻击[她他它]/,
+                                    /[一亿义][眼看](就是)?ai/,
+                                    /(无脑的?)?(喷子|键盘侠)/,
+                                    /不是?.*[而却]是[， ](拉满了)+/,
+                                    /(简直)?无敌了/,
+                                    "黄昏见证虔诚的信徒",
+                                    "巅峰产生虚伪的拥护",
+                                    /节奏(不[断停]|很?大)/,
+                                    /戾气好?重/,
+                                    /[铭鸣][式试]|.+只需?[要用].+[就便]可以了.{1,3}但.+需?要?考虑的?就多了/,
+                                    /魔怔是?吧/
+                                ],
+                                bullets: [
+                                    /([好豪太][烫热早])+/,
+                                    /^([来看好]|这么)[早完晚]了?/,
+                                    /^.$/,
+                                    /^(好?[烫冷凉热]+手?|热乎)$/,
+                                    /^第[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+个?[看康][玩丸完]/,
+                                    /[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几半Ww]+([秒妙]钟?|分钟?|小?时|[日天月年])之?前/,
+                                    /[前钱]排/,
+                                    /(暂停|截图)(成功|失败|学表情)/,
+                                    "我?出息了.?",
+                                    "前来考古",
+                                    /热[一1①１]?热还能吃/,
+                                    /^刚刚$/,
+                                    /^(最|比?较)([早晚爱]|喜欢)的?[一1①１][集次期].?/,
+                                    /^[<《]?[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[》>]?$/,
+                                    /^[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[个的号]?(人|粉丝|硬?币|点?赞|)?$/,
+                                    /[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[个的号]?(人|粉丝?)?([在再]看|(你们|大家)好|合影|(给我)?出来|和我看|(别|不要再?)躲了)/,
+                                    /(\u25e3\u25e5)+(danger|drangr)?/, // ◣◥WARNING
+                                    /^借[你您]吉言$/,
+                                    /此生无悔|来世[愿原]做/,
+                                    /^(你品)?.?你细?品$/,
+                                    /^[Oo][Hh]{2,}$/,
+                                    /空[平瓶屏贫凭]/,
+                                    /点点?举[报办]/,
+                                    "下次一定",
+                                    "弹幕礼仪",
+                                    "热乎",
+                                    "保护",
+                                    /(请|不[愿想]看)([滚滾]|撤退?|离开|右上角?)|散了吧?|洗洗睡|不喜欢(别|不要)/,
+                                    /^(求|祝|保佑).*[考上].*|保佑.*[我前不挂]$/,
+                                    /引战|闭嘴|打脸|素质|[键鍵][盘盤](侠|大手|斗士|[黨党])|喷子|吵架|[撕逼][逼b]/,
+                                    /[神蛇深][经井][病冰]/,
+                                    /[火][前钳]|[流留刘][名铭明]|要火|万火留/,
+                                    "^前方高能$",
+                                    "假高能",
+                                    "mdzz",
+                                    /智[商障]/,
+                                    /(去|弄|必须)死|杀了[你我他她它泥尼拟]|死.{0,2}(爸|妈|爹|娘|全家|户口本)|司马$/,
+                                    /[由有]我(来){0,}[组租]成/,
+                                    /是(精日|日杂|汉[奸J])/,
+                                    /^(.+[—\-_]+)+$/,
+                                    /完结.*[撒撤散]花/,
+                                    /某些?人|有些人/, // 讽刺隐喻
+                                    /非战斗人员.*迅速撤离|fbi ?warning/,
+                                    /这不是演习[，,！!]/,
+                                    "小鬼",
+                                    "跳街舞",
+                                    /ጿ(\s?)ኈ\1ቼ\1ዽ\1ጿ\1/,
+                                    /高能(列车|[均军君菌])/,
+                                    "架好机枪，准备战斗",
+                                    "▄︻┻┳═一",
+                                    /■{3,}/,
+                                    "屏蔽词"
+                                ],
+                                videoTitle: []
+                            },
+                            blockingUsers: {
+                                levelLowerThan: 3,
+                                comments: [
+                                    "机器工具人",
+                                    "有趣的程序员",
+                                    "AI视频小助理",
+                                    "AI视频小助理总结一下",
+                                    "AI笔记侠",
+                                    "AI视频助手",
+                                    "哔哩哔理点赞姬",
+                                    "课代表猫",
+                                    "AI课代表呀",
+                                    "木几萌Moe",
+                                    "星崽丨StarZai",
+                                    "AI沈阳美食家",
+                                    "AI识片酱",
+                                    "AI头脑风暴",
+                                    "GPT_5",
+                                    "Juice_AI",
+                                    "AI全文总结",
+                                    "AI视频总结",
+                                    "AI总结视频"
+                                ]
+                            }
+                        }
+                    }
+                
+                case SUPPORTED_PLATFORMS.steam:
+                    return {
+                        community: {
+                            blockingUsers: [],
+                            workshop: {
+                                blockingWords: {
+                                    itemTitle: [],
+                                    itemDescription: [],
+                                    comments: []
+                                }
+                            },
+                            guide: {
+                                blockingWords: {
+                                    title: [],
+                                    content: [],
+                                    comments: []
+                                }
+                            }
+                        }
+                    }
+
+                default:
+                    const config = {}
+                    for (const platform in SUPPORTED_PLATFORMS) {
+                        if (Object.prototype.hasOwnProperty.call(SUPPORTED_PLATFORMS, platform) && platform != SUPPORTED_PLATFORMS.unknown) {
+                            config[platform] = this.getDefaultConfig(SUPPORTED_PLATFORMS[platform])
+                        }
+                    }
+                    return config
             }
         }
-    }
-    const BLOCKING_USERS = {
-        bilibili: {
-            levelLowerThan: 3,
-            comments: [
-                "机器工具人",
-                "有趣的程序员",
-                "AI视频小助理",
-                "AI视频小助理总结一下",
-                "AI笔记侠",
-                "AI视频助手",
-                "哔哩哔理点赞姬",
-                "课代表猫",
-                "AI课代表呀",
-                "木几萌Moe",
-                "星崽丨StarZai",
-                "AI沈阳美食家",
-                "AI识片酱",
-                "AI头脑风暴",
-                "GPT_5",
-                "Juice_AI",
-                "AI全文总结",
-                "AI视频总结",
-                "AI总结视频"
-            ]
+
+        getOptions(platform) {
+            if (platform == SUPPORTED_PLATFORMS.unknown) {
+                throw new Error("unknown platform, config cannot be created")
+            }
+
+            return GM_getValue("Fti_" + platform)
+        }
+        setOptions(platform, options) {
+            if (platform == SUPPORTED_PLATFORMS.unknown) {
+                throw new Error("unknown platform, config cannot be created")
+            }
+
+            return GM_setValue("Fti_" + platform, options)
+        }
+
+        createOptions(platform, doNothingIfExists = false) {
+            if (platform == SUPPORTED_PLATFORMS.unknown) {
+                throw new Error("unknown platform, config cannot be created")
+            }
+
+            if (doNothingIfExists && this.getOptions(platform)) {
+                return
+            }
+
+            const options = this.getDefaultConfig(platform)
+            this.setOptions(platform, options)
+            return options
         }
     }
+    const optionManager = new OptionManager()
 
     class BilibiliRouter {
         isMainDomain() {
@@ -240,26 +301,33 @@
 
     class FtiUtils {
         regexCache = {}
+        platform = null
 
         getInnerElemText(elem, selector) {
             return elem.querySelector(selector).innerText.trim()
         }
 
         getPlatform() {
+            if (this.platform) {
+                return this.platform
+            }
+
             const host = location.host.toLowerCase()
             if (host.endsWith("bilibili.com")) {
-                return SUPPORTED_PLATFORMS.bilibili
+                this.platform = SUPPORTED_PLATFORMS.bilibili
             }
             else if (host == "steamcommunity.com" || host == "steampowered.com") {
-                return SUPPORTED_PLATFORMS.steam
+                this.platform = SUPPORTED_PLATFORMS.steam
             }
             else {
-                return SUPPORTED_PLATFORMS.unknown
+                this.platform = SUPPORTED_PLATFORMS.unknown
             }
+
+            return this.platform
         }
 
         regexMatch(str, matcher) {
-            switch (typeof(matcher)) {
+            switch (typeof matcher) {
                 case "string":
                     if (!Object.prototype.hasOwnProperty.call(this.regexCache, matcher)) {
                         this.regexCache[matcher] = new RegExp(matcher, "gi")
@@ -287,6 +355,14 @@
 
         removePunctuationSymbols(text) {
             return text.replaceAll(/[\s！\!@#￥%…&\*（）\(\)‘’“”"';:；：，。\/,\.、\?？《》<>~`·—\-\+=\{\}\|\\【】\[\]]/gi, "")
+        }
+
+        randomString(length, charset = "0123456789abcdef") {
+            let str = ""
+            for (let i = 0; i < length; i++) {
+                str += charset.charAt(Math.floor(Math.random() * charset.length))
+            }
+            return str
         }
 
         log(...content) {
@@ -389,20 +465,20 @@
                     const content = BilibiliFilter.getContent(elem, true)
                     let text = ftiUtils.getInnerElemText(content, "#contents")
 
-                    const blockingMatches = ftiUtils.regexListMatch(text, BLOCKING_WORDS.bilibili.comments)
+                    const blockingMatches = ftiUtils.regexListMatch(text, optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.blockingWords.comments)
 
                     let shouldBlock = false
 
                     if (
-                        BLOCKING_USERS.bilibili.comments.includes(username) ||
-                        level < BLOCKING_USERS.bilibili.levelLowerThan
+                        optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.blockingUsers.comments.includes(username) ||
+                        level < optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.blockingUsers.levelLowerThan
                     ) {
                         elem.classList.add(CLASSNAME_FLAGS.blockedComment)
                         shouldBlock = true
                     }
 
                     if (!elem.className.includes(CLASSNAME_FLAGS.blockedComment) && blockingMatches.length != 0) {
-                        if (OPTIONS.bilibili.filter.replaceBlockingWordsToSymbols) {
+                        if (optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.replaceBlockingWordsToSymbols) {
                             blockingMatches.forEach(match => {
                                 const start = match.index;
                                 const end = start + match[0].length;
@@ -456,20 +532,20 @@
                     const content = BilibiliFilter.getContent(elem)
                     let text = ftiUtils.getInnerElemText(content, "#contents")
 
-                    const blockingMatches = ftiUtils.regexListMatch(text, BLOCKING_WORDS.bilibili.comments)
+                    const blockingMatches = ftiUtils.regexListMatch(text, optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.blockingWords.comments)
 
                     let shouldBlock = false
 
                     if (
-                        BLOCKING_USERS.bilibili.comments.includes(username) ||
-                        level < BLOCKING_USERS.bilibili.levelLowerThan
+                        optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.blockingUsers.comments.includes(username) ||
+                        level < optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.blockingUsers.levelLowerThan
                     ) {
                         elem.classList.add(CLASSNAME_FLAGS.blockedComment)
                         shouldBlock = true
                     }
 
                     if (!elem.className.includes(CLASSNAME_FLAGS.blockedComment) && blockingMatches.length != 0) {
-                        if (OPTIONS.bilibili.filter.replaceBlockingWordsToSymbols) {
+                        if (optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.replaceBlockingWordsToSymbols) {
                             blockingMatches.forEach(match => {
                                 const start = match.index;
                                 const end = start + match[0].length;
@@ -500,10 +576,10 @@
                 this.bullets.forEach(elem => {
                     let text = elem.innerText.trim()
                     
-                    const blockingMatches = ftiUtils.regexListMatch(text, BLOCKING_WORDS.bilibili.bullets)
+                    const blockingMatches = ftiUtils.regexListMatch(text, optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.blockingWords.bullets)
 
                     if (blockingMatches.length != 0) {
-                        if (OPTIONS.bilibili.filter.replaceBlockingWordsToSymbols) {
+                        if (optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.replaceBlockingWordsToSymbols) {
                             blockingMatches.forEach(match => {
                                 const start = match.index;
                                 const end = start + match[0].length;
@@ -590,7 +666,7 @@
             const title = document.createElement("h3")
             title.appendChild(document.createTextNode(LOCALES.settings.title))
             const exitBtn = document.createElement("button")
-            exitBtn.appendChild(FtiMenu.createIcon("x"))
+            exitBtn.appendChild(this.createIcon("x"))
             exitBtn.onclick = () => this.hide()
 
             titleCont.appendChild(title)
@@ -598,14 +674,90 @@
 
             this.menu.appendChild(titleCont)
 
+            const content = document.createElement("div")
+            content.className = CLASSNAME_FLAGS.menuContent
+
+            this.setupOptions(content)
+
+            this.menu.appendChild(content)
+
             document.body.appendChild(this.menu)
             this.hide()
         }
 
-        static createIcon(name) {
+        createIcon(name) {
             const icon = document.createElement("i")
             icon.className = "bi-" + name
             return icon
+        }
+        createOptionSection(title, options) {
+            const section = document.createElement("div")
+            section.className = CLASSNAME_FLAGS.optionSection
+            options.forEach(option => section.appendChild(option))
+            return section
+        }
+        createSwitchOption(title, desc, states, onApplying) {
+            const option = document.createElement("li")
+            option.classList = CLASSNAME_FLAGS.switchOption
+            option.title = desc
+
+            const titleElem = document.createElement("span")
+            titleElem.appendChild(document.createTextNode(title))
+
+            option.appendChild(titleElem)
+
+            const id = ftiUtils.randomString(6)
+            const stateSwitchCont = document.createElement("div")
+            if (states == "YesOrNo") {
+                states = {
+                    "true": LOCALES.settings.yes,
+                    "false": LOCALES.settings.no
+                }
+            }
+            for (const value in states) {
+                if (Object.prototype.hasOwnProperty.call(states, value)) {
+                    const stateCont = document.createElement("div")
+
+                    const stateRadio = document.createElement("input")
+                    stateRadio.type = "radio"
+                    stateRadio.name = id
+                    stateRadio.value = value
+                    stateRadio.onchange = () => onApplying(value)
+
+                    stateCont.appendChild(stateRadio)
+
+                    const label = document.createElement("label")
+                    label.htmlFor = id
+                    label.appendChild(document.createTextNode(states[value]))
+
+                    stateCont.appendChild(label)
+
+                    stateSwitchCont.appendChild(stateCont)
+                }
+            }
+
+            option.appendChild(stateSwitchCont)
+
+            return option
+        }
+
+        setupOptions(parent) {
+            switch (ftiUtils.getPlatform()) {
+                case SUPPORTED_PLATFORMS.bilibili:
+                    this.createOptionSection(LOCALES.settings.commentBlockingWords, [
+                        this.createSwitchOption(
+                            LOCALES.settings.replaceBlockingWordsToSymbols, 
+                            LOCALES.settings.replaceBlockingWordsToSymbolsDesc, 
+                            "YesOrNo",
+                            status => GM_setValue(OPTION_KEYS.replaceBlockingWordsToSymbols, status)
+                        )
+                    ])
+
+                    break
+
+                default:
+                    ftiUtils.warn("there is not any option for the platform")
+            }
         }
 
         show() {
@@ -623,6 +775,7 @@
 
         let observeUgc = () => ftiUtils.error("ugc observer is not setup yet")
         const platform = ftiUtils.getPlatform()
+        ftiUtils.log("current platform:", platform)
         if (platform == SUPPORTED_PLATFORMS.bilibili) {
             const router = new BilibiliRouter()
             const filter = new BilibiliFilter(router)
@@ -662,7 +815,7 @@
                 if (router.isVideoPage()) {
                     const comments = document.querySelector('bili-comments');
                     if (comments && comments.shadowRoot) {
-                        if (OPTIONS.bilibili.filter.doNotLookAnyComment) {
+                        if (optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.doNotLookAnyComment) {
                             comments.remove()
                             return
                         }
@@ -673,7 +826,7 @@
                     if (player) {
                         const bullets = player.querySelector('.bpx-player-row-dm-wrap')
                         if (bullets) {
-                            if (OPTIONS.bilibili.filter.doNotLookAnyBullet) {
+                            if (optionManager.getOptions(SUPPORTED_PLATFORMS.bilibili).filter.doNotLookAnyBullet) {
                                 bullets.remove()
                                 return
                             }
@@ -686,6 +839,9 @@
         else {
             ftiUtils.warn("Current platform is not supported. If you see this message, script probably matched incorrect website, please tell the developer.")
         }
+
+        ftiUtils.log("checking config")
+        optionManager.createOptions(ftiUtils.getPlatform(), true)
 
         let openMenuId = null
         const domObserver = new MutationObserver(() => {
