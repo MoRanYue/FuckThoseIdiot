@@ -1,0 +1,166 @@
+#
+# # FuckThoseIdiot Filter Rules
+#
+# If you want to create a FTI filter rules by yourself, you just need check this!
+#
+# ## Basics
+#
+# There are several things you need to know firstly.
+#
+# **A "filter" file consists of some "properties" commonly.**
+# For example, there is `Attr IAmAnAttribute = "Look at me! I am this property's value!"` in a single line or multilines, so it is a property.
+#
+# In general, a simple property has these parts:
+# ```
+# Attr          IAmAnAttrProp = "fxxk"
+# ↑↑↑↑          ↑↑↑↑↑↑↑↑↑↑↑↑↑   ↑↑↑↑↑↑
+# PropertyType  PropertyName    Value
+#
+# ATTENTION! Not all properties' parts are the same!
+# ```
+#
+# ## Data Types
+#
+# Many properties have their values, but every property may needs different values.
+#
+# Here is a list of all data types:
+#
+# | Type | Description | Example |
+# | ---- | ----------- | ------- |
+# | `String` | The text enclosed in quotation marks.<br>Some escape characters can be used, just start them with `\` such as `\n` or `\"`, but the escape characters of Regex do not need. | "A string \n (may be a Regex Expression)" |
+# | `Boolean` | They are just `True` and `False`. | True, False, true, false |
+# | `Group[<T>]` | A group of values, they are enclosed in square brackets, elements in it are divided by comma. | [ "Foo", [ "Nested Group", "Second Element" ], "Bar" ] |
+#
+# ## Comment
+#
+# Comment is a passage starts with `#`. When FTI is parsing, comments are ignored.
+#
+# Comments are used to tell something to the readers who are reading the file, 
+#
+# ## Property Types
+#
+# There are several types of property you need to know, they are:
+#
+# | Type | Description |
+# | ---- | ----------- |
+# | `Attr` | Specify some information and attributes of the file (filter). |
+# | `Rule` | Define a rule (blocking words) that uses Regex Expression (or just plain text that is used for matching), with a bunch of functional flags. It can be inserted into others if it is named. |
+# | `Charset` | Simply define an insertable text. Unlike property `Rule`, `Charset` will not be used when filtering. Generally, They are used to reuse Regex Expression. |
+# | `Replacement` | Define a replacement that will take place when filtering, the matched text can be replaced to other text instead of blocking them. |
+#
+# All types, names, values and Regex Expressions are CASE INSENSITIVE!
+# Because of this, "Attr Platform = Steam" equals to "attr platform = steam"
+#
+# ### `Attr` Property
+#
+# There are several attributes you need to use to change some behaviors or just define metadata:
+#
+# | Name | Expected Value Type | Description |
+# | ---- | ------------------- | ----------- |
+# | `Name` | `String` | Name of this filter. |
+# | `Version` | `String` | Version of this filter. |
+# | `Language` | `Group<String>` | Languages that this filter uses. |
+# | `Platform` | `Group<String>` | Platforms that this filter will apply.<br>If you gave it `*`, they will apply on all specified platforms. |
+# | `EnableOn` | `Group<String>` | What pages will the rules below apply on?<br>If you gave it `*`, they will apply on all specified platforms' pages. |
+# | `Imports` | `Group<String>` | A group of URIs direct to other filter files. It will try to import filters.<br>So you can use the imported files' `Charset` and `Rule` properties in this file. |
+#
+# `Expected Value Type` means what the attribute needs, so you may see this:
+# ```
+# Attr Name = "Filter Name"
+# equals to
+# Attr Name = Filter Name
+#
+# Attr Imports = ./foo.filter, https://example.com/charset.filter
+# equals to
+# Attr Imports = [ ./other.filter, https://example.com/charset.filter ]
+# equals to
+# Attr Imports = [ "./other.filter", "https://example.com/charset.filter" ]
+# ```
+#
+# ### `Rule` Property
+#
+# As you read above, so there is an example:
+# ```
+# Rule = foo|bar
+# ```
+#
+# When filtering, rules are considered as blocking words for matching actual UGC.
+#
+# Its scope of effect can be specified by attribute `EnableOn` and `Platform`.
+#
+# #### Named Rule
+#
+# If you want to insert a filter to others, you must name it!
+#
+# ```
+# Rule A = foo
+# Rule = {{ A }}|bar
+# ```
+#
+# #### Flags
+#
+# To make it great, flags are born for realizing more functions.
+#
+# Flags should lie at the end of a rule and start with `$`.
+#
+# **ATTENTION! When you want to use flags, rule's value must be enclosed in quotation marks!**
+#
+# Here is an example:
+# ```
+# Rule = "^\d+$" $Reason = Thread Number $ForceBlocking
+# ```
+#
+# A list of all flags:
+#
+# | Flag | Expected Value Type | Default Value | Description |
+# | ---- | ------------------- | ------------- | ----------- |
+# | `Reason` | `Group<String>` | `<None>` | Why this rule block? |
+# | `ForceBlocking` | `Boolean` | `False` | Determine whether it ignores user setting `replaceBlockingWordsToSymbols`. |
+# | `ForceHide` | `Boolean` | `False` | This flag will works if user setting `replaceBlockingWordsToSymbols` is enabled, it will hide blocking words directly instead of replace them to `*`. |
+# | `EnableOn` | `Group<String>` | `<None>` | Besides `Attr EnableOn`, what pages else will apply on?<br>You can start with `!` such as `!VideoComment`, it means that page will not apply this rule. |
+# | `Regexless` | `Boolean` | `False` | Do not use Regex when filtering. |
+# | `SecondaryMatching` | `Boolean` | `True` | Do not pass to secondary matching.<br>What is secondary matching? A lot of "low-IQ kids" try to insert blanks or punctuation marks between characters to emphasize their words or just want to prevent being blocked, secondary matching will remove these characters and compare them with rules again, to destroy their dreams! |
+#
+# `Boolean` flags do not need to write `True` or `False`, you just add their name, then all done.
+# So `$Regexless = True` equals to `$Regexless`.
+#
+# ##### Localized Reason
+#
+# You can use some special text, when filtering, they will be replaced to certain localized text.
+#
+# They are case insensitive.
+#
+# | Text | Localized Text |
+# | ---- | -------------- |
+# | `Fl` | Foul language |
+# | `Sp` | Stupid person |
+# | `Wac` | Water armies' comment |
+# | `Al` | Awful language |
+# | `Lous` | Lack of useful suggestion |
+# | `O` | Offensive |
+# | `Fob` | Follow others blindly |
+# | `B` | Bias |
+# | `Ooc` | Out of context |
+# | `Fe` | Fake expert |
+# | `Ms` | Malicious speculation |
+# | `Eac` | Extremely-absolute comment |
+# | `T` | Thread |
+# | `P` | Porn |
+
+Attr Name = Example Rules
+Attr Version = 1.0.0
+Attr Language = zh-CN, en-US
+Attr Platform = Bilibili
+Attr Imports = ../charset.filter
+
+Attr EnableOn = VideoComment, ArticleComment
+
+Rule FoulLanguage = "fuck(ing)?( {{ EnglishPersonalPronouns }})?|idiot" $Reason = Fl $ForceBlocking
+
+Attr EnableOn = VideoBullet, LiveBullet
+
+Rule = "^{{ SpecialFloatNumber }}$" $Reason = T # Fully-matched UGC will be hidden directly, so we do not need `$ForceBlocking`.
+
+Attr EnableOn = RecommendedVideo
+
+Rule = "为(什么|何)" $Reason = Al # Because some UGC such as video title is usually whole blocked, so we do not need `$ForceBlocking`.

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fuck Those Idiot
 // @namespace    http://tampermonkey.net/
-// @version      0.4.1
+// @version      0.5.0
 // @description  Block UGC which those idiots you hate and feel annoying posted
 // @author       MoRanYue
 // @license      MIT
@@ -9,7 +9,7 @@
 // @updateURL    https://github.com/MoRanYue/FuckThoseIdiot/raw/main/FuckThoseIdiot.user.js
 // @supportURL   https://github.com/MoRanYue/FuckThoseIdiot/issues
 // @match        *://*.bilibili.com/*
-// @match        *://steamcommunity.com/app/*/workshop/*
+// @match        *://steamcommunity.com/*
 // @exclude      *://api.bilibili.com
 // @exclude      *://data.bilibili.com
 // @icon         https://www.bilibili.com/favicon.ico
@@ -77,142 +77,13 @@
                         filter: {
                             replaceBlockingWordsToSymbols: true, // Only for comments, other UGC (such as video, game addons) will still being hidden
                             doNotLookAnyComment: false,
-                            doNotLookAnyBullet: false,
-                            blockingWords: {
-                                comments: [
-                                    /[他它她你tn][吗嘛码妈玛马m]/,
-                                    /[傻杀沙啥煞砂煞鲨2s][逼比币哔笔b]/,
-                                    /就[是像向象]?(依托|一?坨)([屎使石史]|答辩|大便)/,
-                                    /([机鸡几集寄])(\1|[把吧八8巴霸扒])/,
-                                    /[吃赤][屎石实史]/,
-                                    /[草操艹去糙日囸c][他它她你tn][吗嘛码妈玛马m]/,
-                                    /如果(其[它他她]|别)人没.*那么请问.*谁知道?你/,
-                                    /并?不是知道?错.*而是知道?自己[快要将]要?死了?/,
-                                    /饭圈化?/,
-                                    /经典的?自以为是/,
-                                    /凭什么[他她它].*我?们?[就便]?要[体原]谅[？\?]?/,
-                                    "通用模板",
-                                    /素质(令人)?堪忧/,
-                                    /(强行)?([带搞].*节奏|引战)/,
-                                    /[神蛇深][经井][病冰]/,
-                                    /(去|弄|必须)死|杀了[你我他她它泥尼拟]|死.{0,2}(爸|妈|爹|娘|全家|户口本)|司马$/,
-                                    /[键件剑贱建见]人/,
-                                    /^\[.+\]$/, // 单个表情
-                                    /又蠢又坏(说的)?就?是这[种样]/,
-                                    /(感觉|我?认为)(真的|就是)唐/,
-                                    /我?(就是)?[在再]攻击[她他它]/,
-                                    /[一亿义][眼看](就是)?ai/,
-                                    /(无脑的?)?(喷子|键盘侠)/,
-                                    /不是?.*[而却]是[， ](拉满了)+/,
-                                    /(简直)?无敌了/,
-                                    "黄昏见证虔诚的信徒",
-                                    "巅峰产生虚伪的拥护",
-                                    /节奏(不[断停]|很?大)/,
-                                    /戾气好?重/,
-                                    /[铭鸣][式试]|.+只需?[要用].+[就便]可以了.{1,3}但.+需?要?考虑的?就多了/,
-                                    /魔怔是?吧/
-                                ],
-                                bullets: [
-                                    /([好豪太][烫热早])+/,
-                                    /^([来看好]|这么)[早完晚]了?/,
-                                    /^.$/,
-                                    /^(好?[烫冷凉热]+手?|热乎)$/,
-                                    /^第[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+个?[看康][玩丸完]/,
-                                    /[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几半Ww]+([秒妙]钟?|分钟?|小?时|[日天月年])之?前/,
-                                    /[前钱]排/,
-                                    /(暂停|截图)(成功|失败|学表情)/,
-                                    "我?出息了.?",
-                                    "前来考古",
-                                    /热[一1①１]?热还能吃/,
-                                    /^刚刚$/,
-                                    /^(最|比?较)([早晚爱]|喜欢)的?[一1①１][集次期].?/,
-                                    /^[<《]?[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[》>]?$/,
-                                    /^[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[个的号]?(人|粉丝|硬?币|点?赞|)?$/,
-                                    /[①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零百千万亿几Ww]+[\+加＋架多]?[个的号]?(人|粉丝?)?([在再]看|(你们|大家)好|合影|(给我)?出来|和我看|(别|不要再?)躲了)/,
-                                    /(\u25e3\u25e5)+(danger|drangr)?/, // ◣◥WARNING
-                                    /^借[你您]吉言$/,
-                                    /此生无悔|来世[愿原]做/,
-                                    /^(你品)?.?你细?品$/,
-                                    /^[Oo][Hh]{2,}$/,
-                                    /空[平瓶屏贫凭]/,
-                                    /点点?举[报办]/,
-                                    "下次一定",
-                                    "弹幕礼仪",
-                                    "热乎",
-                                    "保护",
-                                    /(请|不[愿想]看)([滚滾]|撤退?|离开|右上角?)|散了吧?|洗洗睡|不喜欢(别|不要)/,
-                                    /^(求|祝|保佑).*[考上].*|保佑.*[我前不挂]$/,
-                                    /引战|闭嘴|打脸|素质|[键鍵][盘盤](侠|大手|斗士|[黨党])|喷子|吵架|[撕逼][逼b]/,
-                                    /[神蛇深][经井][病冰]/,
-                                    /[火][前钳]|[流留刘][名铭明]|要火|万火留/,
-                                    "^前方高能$",
-                                    "假高能",
-                                    "mdzz",
-                                    /智[商障]/,
-                                    /(去|弄|必须)死|杀了[你我他她它泥尼拟]|死.{0,2}(爸|妈|爹|娘|全家|户口本)|司马$/,
-                                    /[由有]我(来){0,}[组租]成/,
-                                    /是(精日|日杂|汉[奸J])/,
-                                    /^(.+[—\-_]+)+$/,
-                                    /完结.*[撒撤散]花/,
-                                    /某些?人|有些人/, // 讽刺隐喻
-                                    /非战斗人员.*迅速撤离|fbi ?warning/,
-                                    /这不是演习[，,！!]/,
-                                    "小鬼",
-                                    "跳街舞",
-                                    /ጿ(\s?)ኈ\1ቼ\1ዽ\1ጿ\1/,
-                                    /高能(列车|[均军君菌])/,
-                                    "架好机枪，准备战斗",
-                                    "▄︻┻┳═一",
-                                    /■{3,}/,
-                                    "屏蔽词"
-                                ],
-                                videoTitle: []
-                            },
-                            blockingUsers: {
-                                levelLowerThan: 3,
-                                comments: [
-                                    "机器工具人",
-                                    "有趣的程序员",
-                                    "AI视频小助理",
-                                    "AI视频小助理总结一下",
-                                    "AI笔记侠",
-                                    "AI视频助手",
-                                    "哔哩哔理点赞姬",
-                                    "课代表猫",
-                                    "AI课代表呀",
-                                    "木几萌Moe",
-                                    "星崽丨StarZai",
-                                    "AI沈阳美食家",
-                                    "AI识片酱",
-                                    "AI头脑风暴",
-                                    "GPT_5",
-                                    "Juice_AI",
-                                    "AI全文总结",
-                                    "AI视频总结",
-                                    "AI总结视频"
-                                ]
-                            }
+                            doNotLookAnyBullet: false
                         }
                     }
                 
                 case SUPPORTED_PLATFORMS.steam:
                     return {
                         community: {
-                            blockingUsers: [],
-                            workshop: {
-                                blockingWords: {
-                                    itemTitle: [],
-                                    itemDescription: [],
-                                    comments: []
-                                }
-                            },
-                            guide: {
-                                blockingWords: {
-                                    title: [],
-                                    content: [],
-                                    comments: []
-                                }
-                            }
                         }
                     }
 
@@ -257,6 +128,454 @@
         }
     }
     const optionManager = new OptionManager()
+
+    class FilterError extends Error {
+        constructor(startLine, endLine, startPos, endPos, message) {
+            super(message)
+
+            this.startLine = startLine
+            this.endLine = endLine
+            this.startPos = startPos
+            if (this.startPos) {
+                this.startPos++
+            }
+            this.endPos = endPos
+            if (this.endPos) {
+                this.endPos++
+            }
+        }
+
+        toString() {
+            let str = ""
+            if (this.startLine) {
+                str += this.startLine.toString()
+                if (this.startPos) {
+                    str += "-" + this.startPos.toString()
+                }
+
+                if (this.endLine) {
+                    str += " to " + this.endLine.toString()
+                    if (this.endPos) {
+                        str += "-" + this.endPos.toString()
+                    }
+                }
+
+                str += ": "
+            }
+            return str + this.message
+        }
+    }
+    class FilterParser {
+        BLANKS = ["\t", "\n", " "]
+        CONTAINER = ["[]", '""']
+
+        init(content) {
+            this.line = 1
+            this.pos = -1
+            this.char = null
+            this.content = content
+            
+            this.advance()
+        }
+
+        back() {
+            this.pos--
+            this.char = this.content[this.pos]
+            if (this.char == "\n") {
+                this.line--
+            }
+        }
+        advance() {
+            this.pos++
+            this.char = this.content[this.pos]
+            if (this.char == "\n") {
+                this.line++
+            }
+        }
+
+        isBlanks(char) {
+            return this.BLANKS.includes(char) || !char
+        }
+        skipBlanks() {
+            while (this.char && this.isBlanks(this.char)) {
+                this.advance()
+            }
+        }
+
+        handleError(o, key, maybeError) {
+            if (maybeError instanceof FilterError) {
+                return maybeError
+            }
+
+            o[key] = maybeError
+            return o
+        }
+
+        parseToken(returnedValueType = "raw") {
+            let output
+            let isEnclosed
+
+            let startLine = this.line
+            let startPos = this.pos
+            
+            switch (returnedValueType) {
+                case "group":
+                    output = []
+                    let elem = null
+                    isEnclosed = this.char == "["
+                    if (isEnclosed) {
+                        this.advance()
+                    }
+                    const parseOpenString = () => {
+                        const str = this.parseToken(",]\n")
+                        if (this.char == ",") {
+                            return [1, str]
+                        }
+                        else if (isEnclosed && this.char == "]") {
+                            return [0, str]
+                        }
+                        else if (!isEnclosed && this.char == "\n") {
+                            return [0, str]
+                        }
+
+                        const nextStr = parseOpenString()
+                        return [nextStr[0], str + "]" + nextStr[1]]
+                    }
+                    while (this.char) {
+                        if (isEnclosed) {
+                            if (this.char == ']') {
+                                this.advance()
+                                return output
+                            }
+                        }
+                        else {
+                            if (this.char == "\n") {
+                                return output
+                            }
+                        }
+
+                        this.skipBlanks()
+
+                        if (this.char == "[") {
+                            elem = this.parseToken("group")
+                            output.push(elem)
+                        }
+                        else if (this.char == '"') {
+                            elem = this.parseToken("string")
+                            output.push(elem)
+                        }
+                        else {
+                            const str = parseOpenString()
+                            elem = str[1]
+                            output.push(elem)
+                            if (str[0]) {
+                                this.advance()
+                            }
+                        }
+                    }
+
+                    if (isEnclosed) {
+                        return new FilterError(startLine, this.line, startPos, this.pos, "group is enclosed but nothing remains")
+                    }
+                    return output
+
+                case "string":
+                    output = ""
+                    isEnclosed = this.char == '"'
+                    if (isEnclosed) {
+                        this.advance()
+                    }
+                    while (this.char) {
+                        if (isEnclosed) {
+                            if (this.char == '"') {
+                                this.advance()
+                                return output
+                            }
+                        }
+                        else {
+                            if (this.char == "\n") {
+                                return output
+                            }
+                        }
+
+                        if (this.char == "\\") {
+                            this.advance()
+                            if (['"', "\\"].includes(this.char)) {
+                                output += this.char
+                            }
+                            else {
+                                output += "\\" + this.char
+                            }
+                        }
+                        else {
+                            output += this.char
+                        }
+                        this.advance()
+                    }
+
+                    if (isEnclosed) {
+                        return new FilterError(startLine, this.line, startPos, this.pos, "string is enclosed but nothing remains")
+                    }
+                    return output
+            
+                case "raw":
+                    output = ""
+                    while (!this.isBlanks(this.char)) {
+                        output += this.char
+                        this.advance()
+
+                        if (this.char == "#") {
+                            while (this.char && char != "\n") {
+                                this.advance()
+                            }
+                        }
+                    }
+                    return output
+                
+                default:
+                    const escapeChars = []
+                    const stoppingChars = []
+                    for (let i = 0; i < returnedValueType.length; i++) {
+                        if (returnedValueType[i] == "\\") {
+                            i++
+                            escapeChars.push(returnedValueType[i])
+                        }
+                        else {
+                            stoppingChars.push(returnedValueType[i])
+                        }
+                    }
+
+                    output = ""
+                    while (this.char && !stoppingChars.includes(this.char)) {
+                        if (this.char == "\\") {
+                            this.advance()
+                            if (escapeChars.includes(this.char)) {
+                                output += this.char
+                            }
+                            else {
+                                output += "\\" + this.char
+                            }
+                        }
+                        else {
+                            output += this.char
+                        }
+                        this.advance()
+
+                        if (this.char == "#") {
+                            while (this.char && char != "\n") {
+                                this.advance()
+                            }
+                        }
+                    }
+                    return output.trim()
+            }
+        }
+
+        parseValue(expectedType) {
+            if (expectedType == "string") {
+                return this.parseToken("string")
+            }
+            else if (expectedType == "group") {
+                return this.parseToken("group")
+            }
+            else {
+                return new FilterError(this.pos, undefined, this.pos, undefined, "unknown data type " + expectedType)
+            }
+        }
+        stringToBoolean(s) {
+            if (s == "true") {
+                return true
+            }
+            else if (s == "false") {
+                return false
+            }
+            return null
+        }
+        parseProperty() {
+            const startPos = this.pos
+            const startLine = this.line
+            const type = this.parseToken()
+            const lowerCaseType = type.toLowerCase()
+            if (lowerCaseType == "attr") {
+                const name = this.parseToken("=")
+                if (name == "=") {
+                    return new FilterError(startLine, this.line, startPos, this.pos, "missing name")
+                }
+
+                if (this.char == "=") {
+                    this.advance()
+                    this.skipBlanks()
+                    let value
+                    switch (name.toLowerCase()) {
+                        case "name":
+                        case "version":
+                            value = this.parseValue("string")
+                            break
+
+                        case "language":
+                        case "platform":
+                        case "enableon":
+                        case "imports":
+                            value = this.parseValue("group")
+                            break
+                    
+                        default:
+                            value = this.parseValue("string")
+                    }
+
+                    return this.handleError({ type, name }, "value", value)
+                }
+                return new FilterError(startLine, this.line, startPos, this.pos, "missing value")
+            }
+            else if (lowerCaseType == "charset") {
+                const name = this.parseToken("=")
+                if (name == "=") {
+                    return new FilterError(startLine, this.line, startPos, this.pos, "missing name")
+                }
+
+                if (this.char == "=") {
+                    this.advance()
+                    this.skipBlanks()
+                    const value = this.parseValue("string")
+
+                    return this.handleError({ type, name }, "value", value)
+                }
+                return new FilterError(startLine, this.line, startPos, this.pos, "missing value")
+            }
+            else if (lowerCaseType == "rule") {
+                this.skipBlanks()
+                const name = this.parseToken("=")
+                if (this.char == "=") {
+                    this.advance()
+                    this.skipBlanks()
+                    const value = this.parseToken("string")
+                    let nonInsertionValue = ""
+                    let isInInsertion = false
+                    let insertions = []
+                    let insertion = ""
+                    for (let i = 0; i < value.length; i++) {
+                        if (isInInsertion) {
+                            if (value[i] == "}") {
+                                i++
+                                if (value[i] == "}") {
+                                    insertions.push({
+                                        insertion,
+                                        position: nonInsertionValue.length
+                                    })
+                                    isInInsertion = false
+                                    insertion = ""
+                                }
+                                else {
+                                    return new FilterError(startLine, this.line, startPos, this.pos, "missing value")
+                                }
+                            }
+                            else if (!this.isBlanks(value[i])) {
+                                insertion += value[i]
+                            }
+                        }
+                        else if (value[i] == "{") {
+                            i++
+                            if (value[i] == "{") {
+                                isInInsertion = true
+                            }
+                            else {
+                                nonInsertionValue += "{" + value[i]
+                            }
+                        }
+                        else if (value[i] == "\\") {
+                            i++
+                            if (value[i] == "{") {
+                                nonInsertionValue += "{"
+                            }
+                            else {
+                                nonInsertionValue += "\\" + value[i]
+                            }
+                        }
+                        else {
+                            nonInsertionValue += value[i]
+                        }
+                    }
+
+                    this.skipBlanks()
+                    const flags = []
+                    while (this.char == "$") {
+                        this.advance()
+                        const flag = this.parseToken("\n=$")
+                        let value = null
+
+                        if (this.char == "=") {
+                            this.advance()
+                            value = this.parseToken("$\n\\$")
+                        }
+
+                        switch (flag.toLowerCase()) {
+                            case "forceblocking":
+                            case "forcehide":
+                            case "regexless":
+                            case "secondarymatching":
+                                if (value) {
+                                    value = this.stringToBoolean(value)
+                                }
+                                else {
+                                    value = true
+                                }
+                        }
+
+                        flags.push({ name: flag, value })
+                    }
+
+                    return { type, value: { value: nonInsertionValue, insertions }, name: name ? name : null, flags }
+                }
+                return new FilterError(startLine, this.line, startPos, this.pos, "missing value")
+            }
+            else {
+                return new FilterError(startLine, this.line, startPos, this.pos, "illegal type " + type)
+            }
+        }
+
+        serialize(content) {
+            this.init(content)
+
+            const tree = []
+            while (this.char) {
+                if (!this.isBlanks(this.char)) {
+                    const prop = this.parseProperty()
+                    if (prop instanceof FilterError) {
+                        console.error("filter parsing error:\n", prop)
+                        console.warn("tree structure:\n", tree)
+                        return null
+                    }
+                    tree.push(prop)
+                    console.log(prop)
+                }
+
+                this.advance()
+            }
+
+            return tree
+        }
+    }
+    const testParser = new FilterParser()
+    console.log(testParser.serialize(String.raw`
+Attr Name = "Example Rules"
+Attr Version="1.0.0"
+Attr Language=zh-CN, en-US
+Attr Platform = Bilibili
+Attr Imports = ../charset.filter
+
+Attr EnableOn = VideoComment, ArticleComment
+
+Rule FoulLanguage = "fuck(ing)?( {{ EnglishPersonalPronouns }})?|idiot" $Reason = Fl $ForceBlocking
+
+Attr EnableOn = VideoBullet, LiveBullet
+
+Rule = "^{\{ SpecialFloatNumber }}$" $Reason = T
+Rule = "^{{ SpecialFloatNumber }}\+?$" $Reason = nooooooo! $forceblocking=false
+
+Attr EnableOn = RecommendedVideo
+
+Rule = "为(什么|何)" $Reason = Al
+`))
 
     class BilibiliRouter {
         isMainDomain() {
@@ -837,7 +1156,7 @@
             }
         }
         else {
-            ftiUtils.warn("Current platform is not supported. If you see this message, script probably matched incorrect website, please tell the developer.")
+            ftiUtils.warn("Current platform is not supported. If you see this message, this script probably mistakes an incorrect website, please tell the developer.")
         }
 
         ftiUtils.log("checking config")
@@ -854,7 +1173,7 @@
                 ftiUtils.log("menu has been created")
             }
 
-            observeUgc()
+            // observeUgc()
         })
         domObserver.observe(document, { childList: true, subtree: true })
 

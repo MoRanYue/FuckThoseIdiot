@@ -1,0 +1,12 @@
+Attr Name = General Charset
+Attr Language = zh-CN, en-US
+Attr Version = 1.0.0
+
+Charset IntNumber = \d+
+Charset FloatNumber = \d+(\.\d+)?
+
+Charset SpecialIntNumber = [①②③④⑤⑥⑦⑧⑨０１２３４５６７８９0-9〇一二两俩三仨四五六七八九十零]+
+Charset SpecialFloatNumber = {{ SpecialIntNumber }}(\.{{ SpecialIntNumber }})?
+
+Charset EnglishProns = i|me|you|he|him|she|her
+Charset ChineseProns = [我你他她它泥尼拟n]|ta
