@@ -166,8 +166,7 @@
         }
     }
     class FilterParser {
-        BLANKS = ["\t", "\n", " "]
-        CONTAINER = ["[]", '""']
+        BLANKS = "\t\n "
 
         init(content) {
             this.line = 1
@@ -202,13 +201,31 @@
             }
         }
 
-        handleError(o, key, maybeError) {
-            if (maybeError instanceof FilterError) {
-                return maybeError
+        checkError(maybeError) {
+            if (typeof maybeError == "object") {
+                if (maybeError instanceof FilterError) {
+                    return { passed: false, data: maybeError }
+                }
+                else {
+                    for (const k in maybeError) {
+                        if (Object.prototype.hasOwnProperty.call(maybeError, k)) {
+                            const result = this.checkError(maybeError[k])
+                            if (!result.passed) {
+                                return { passed: false, data: result.maybeError }
+                            }
+                        }
+                    }
+                }
             }
-
-            o[key] = maybeError
-            return o
+            return { passed: true, data: maybeError }
+        }
+        handleError(o, key, maybeError) {
+            const result = this.checkError(maybeError)
+            if (result.passed) {
+                o[key] = maybeError
+                return o
+            }
+            return result.data
         }
 
         parseToken(returnedValueType = "raw") {
@@ -317,6 +334,16 @@
                         return new FilterError(startLine, this.line, startPos, this.pos, "string is enclosed but nothing remains")
                     }
                     return output
+
+                case "boolean":
+                    const value = this.parseToken().toLowerCase()
+                    if (value == "true") {
+                        return true
+                    }
+                    else if (value == "false") {
+                        return false
+                    }
+                    return new FilterError(startLine, this.line, startPos, this.pos, "expected Boolean but got " + value)
             
                 case "raw":
                     output = ""
@@ -382,14 +409,55 @@
                 return new FilterError(this.pos, undefined, this.pos, undefined, "unknown data type " + expectedType)
             }
         }
-        stringToBoolean(s) {
-            if (s == "true") {
-                return true
+        processRegexExpression(value) {
+            let nonInsertionValue = ""
+            let isInInsertion = false
+            let insertions = []
+            let insertion = ""
+            for (let i = 0; i < value.length; i++) {
+                if (isInInsertion) {
+                    if (value[i] == "}") {
+                        i++
+                        if (value[i] == "}") {
+                            insertions.push({
+                                insertion,
+                                position: nonInsertionValue.length
+                            })
+                            isInInsertion = false
+                            insertion = ""
+                        }
+                        else {
+                            return new FilterError(startLine, this.line, startPos, this.pos, "missing value")
+                        }
+                    }
+                    else if (!this.isBlanks(value[i])) {
+                        insertion += value[i]
+                    }
+                }
+                else if (value[i] == "{") {
+                    i++
+                    if (value[i] == "{") {
+                        isInInsertion = true
+                    }
+                    else {
+                        nonInsertionValue += "{" + value[i]
+                    }
+                }
+                else if (value[i] == "\\") {
+                    i++
+                    if (value[i] == "{") {
+                        nonInsertionValue += "{"
+                    }
+                    else {
+                        nonInsertionValue += "\\" + value[i]
+                    }
+                }
+                else {
+                    nonInsertionValue += value[i]
+                }
             }
-            else if (s == "false") {
-                return false
-            }
-            return null
+
+            return { nonInsertionValue, insertions }
         }
         parseProperty() {
             const startPos = this.pos
@@ -437,8 +505,12 @@
                     this.advance()
                     this.skipBlanks()
                     const value = this.parseValue("string")
+                    const processedValue = this.processRegexExpression(value)
+                    if (!this.checkError(processedValue).passed) {
+                        return processedValue
+                    }
 
-                    return this.handleError({ type, name }, "value", value)
+                    return { type, name, value: { value: processedValue.nonInsertionValue, insertions: processedValue.insertions } }
                 }
                 return new FilterError(startLine, this.line, startPos, this.pos, "missing value")
             }
@@ -449,51 +521,9 @@
                     this.advance()
                     this.skipBlanks()
                     const value = this.parseToken("string")
-                    let nonInsertionValue = ""
-                    let isInInsertion = false
-                    let insertions = []
-                    let insertion = ""
-                    for (let i = 0; i < value.length; i++) {
-                        if (isInInsertion) {
-                            if (value[i] == "}") {
-                                i++
-                                if (value[i] == "}") {
-                                    insertions.push({
-                                        insertion,
-                                        position: nonInsertionValue.length
-                                    })
-                                    isInInsertion = false
-                                    insertion = ""
-                                }
-                                else {
-                                    return new FilterError(startLine, this.line, startPos, this.pos, "missing value")
-                                }
-                            }
-                            else if (!this.isBlanks(value[i])) {
-                                insertion += value[i]
-                            }
-                        }
-                        else if (value[i] == "{") {
-                            i++
-                            if (value[i] == "{") {
-                                isInInsertion = true
-                            }
-                            else {
-                                nonInsertionValue += "{" + value[i]
-                            }
-                        }
-                        else if (value[i] == "\\") {
-                            i++
-                            if (value[i] == "{") {
-                                nonInsertionValue += "{"
-                            }
-                            else {
-                                nonInsertionValue += "\\" + value[i]
-                            }
-                        }
-                        else {
-                            nonInsertionValue += value[i]
-                        }
+                    const processedValue = this.processRegexExpression(value)
+                    if (!this.checkError(processedValue).passed) {
+                        return processedValue
                     }
 
                     this.skipBlanks()
@@ -501,30 +531,28 @@
                     while (this.char == "$") {
                         this.advance()
                         const flag = this.parseToken("\n=$")
-                        let value = null
+                        let value = true
 
                         if (this.char == "=") {
                             this.advance()
-                            value = this.parseToken("$\n\\$")
+                            this.skipBlanks()
+                            switch (flag.toLowerCase()) {
+                                case "forceblocking":
+                                case "forcehide":
+                                case "regexless":
+                                case "secondarymatching":
+                                    value = this.parseToken("boolean")
+                                    break
+
+                                default:
+                                    value = this.parseToken("$\n\\$")
+                            }
                         }
 
-                        switch (flag.toLowerCase()) {
-                            case "forceblocking":
-                            case "forcehide":
-                            case "regexless":
-                            case "secondarymatching":
-                                if (value) {
-                                    value = this.stringToBoolean(value)
-                                }
-                                else {
-                                    value = true
-                                }
-                        }
-
-                        flags.push({ name: flag, value })
+                        flags.push(this.handleError({ name: flag }, "value", value))
                     }
 
-                    return { type, value: { value: nonInsertionValue, insertions }, name: name ? name : null, flags }
+                    return { type, value: { value: processedValue.nonInsertionValue, insertions: processedValue.insertions }, name: name ? name : null, flags }
                 }
                 return new FilterError(startLine, this.line, startPos, this.pos, "missing value")
             }
@@ -546,7 +574,6 @@
                         return null
                     }
                     tree.push(prop)
-                    console.log(prop)
                 }
 
                 this.advance()
@@ -556,26 +583,98 @@
         }
     }
     const testParser = new FilterParser()
-    console.log(testParser.serialize(String.raw`
-Attr Name = "Example Rules"
-Attr Version="1.0.0"
-Attr Language=zh-CN, en-US
+    console.log(JSON.stringify(testParser.serialize(String.raw`
+Attr Name = Bilibili Official Rules
+Attr Version = 1.0.0
+Attr Language = zh-CN
 Attr Platform = Bilibili
-Attr Imports = ../charset.filter
+Attr Imports = ./charset.filter
+
+Charset Shit = [屎使石史]|[答大][便变遍辩辨]
+Rule = "^(\[.+\])+$" $Reason = T
+Rule = "^.$" $Reason = T
+Rule = "[神蛇深][经井金][病冰]?|神秘的金[属子]" $Reason = Fl, O
+Rule = "[草操艹去糙日囸c]{{ ChineseProns }}[吗嘛码妈玛马m]" $Reason = Fl, O
+Rule = "[他它她你tn][吗嘛码妈玛马m]" $Reason = Fl
+Rule = "mdzz|妈的(智障|制杖|纸杖)" $Reason = Fl
+Rule Idiot = "[傻杀沙啥煞砂煞鲨2s][逼比币哔笔b]" $Reason = Fl, O
+Rule = "不就是?纯?{{ Idiot }}[嘛吗]" $Reason = Fl, O $ForceBlocking
+Rule Jb = "([机鸡几集寄姬])(\1|[把吧八8巴霸扒])" $Reason = P, Fl
+Rule = "[吃赤]{{ Shit }}" $Reason = O
+Rule = "(去|弄|必须)死|杀了{{ ChineseProns }}|[死似司].{0,2}(爸|妈|爹|娘|全家|户口本|马|🐎)" $Reason = O, Fl $ForceBlocking
+Rule = "就[是像向象]?(依托|一?坨|[个歌哥])({{ Shit }}|{{ Jb }})" $Reason = Eac, Fl, O $ForceBlocking
+Rule = "饭圈" $Reason = Al $ForceBlocking $Regexless $EnableOn = *
+
+Attr EnableOn = VideoCommentUsername, ArticleCommentUsername, LivestreamBulletUsername
+Rule AwfulAi = "机器工具人|有趣的程序员|木几萌Moe|AI视频|AI笔记侠|AI.*总结|哔哩哔理点赞姬|课代表猫|AI课代表|星崽丨StarZai|AI沈阳美食家|AI识片酱|AI头脑风暴|GPT_5|Juice_AI" $Reason = AI总结
+
+Attr EnableOn = VideoCommentUserId, ArticleCommentUserId, LivestreamBulletUserId
+Rule = "8455326|234978716|439438614|473018527|622347713|437175450|3546618932496589|1692825065|3494380876859618|3546376048741135|1835753760|9868463|358243654|393788832" $Reason = AI总结
 
 Attr EnableOn = VideoComment, ArticleComment
+Rule = "并?不是知道?错.*而是知道?自己[快要将]要?死了?" $Reason = Ms, Al, T $ForceBlocking $EnableOn = VideoBullet, LivestreamBullet
+Rule = "如果(其[它他她]|别)人没.*那么请问.*谁知道?你" $Reason = Al, Sp, Wac, Lous $ForceBlocking
+Rule = "经典的?自以为是" $Reason = Fe $ForceBlocking
+Rule = "[一义][眼看](就是)?ai" $Reason = Eac $ForceBlocking
+Rule = "凭什么[他她它].*我?们?[就便]?要[体原]谅[？\?]?" $Reason = Al, Sp, O $ForceBlocking
+Rule = "^通用模板" $Reason = Lous $ForceBlocking
+Rule = "素质(令人)?堪忧" $Reason = Lous, Ms
+Rule = "(强行)?([带搞].*节奏|引战)" $Reason = Al, Lous
+Rule = "[键件剑贱建见]人" $Reason = O
+Rule = "又蠢又坏(说的)?就?是这[种样]" $Reason = O
+Rule = "(感觉|我?认为)(真的|就是)唐" $Reason = O, B $ForceBlocking
+Rule = "(无脑的?)?(喷子?|键盘侠)" $Reason = Al
+Rule = "不是?.+[而却]是.+[， ](拉满了)+" $Reason = Al $ForceBlocking
+Rule = "(简直)?无敌了" $Reason = T
+Rule = "巅峰(产生|出现)虚伪的拥护|黄昏见证虔诚的信徒" $Reason = T $ForceBlocking
+Rule = "节奏(不[断停]|很?大)" $Reason = 舆论评价
+Rule = "戾气好?重" $Reason = 舆论评价
+Rule = "[铭鸣][式试]|.+只需?[要用].+[就便]可以了.{1,3}但.+需?要?考虑的?就多了" $Reason = Al $ForceBlocking
+Rule = "魔怔了?是?吧" $Reason = O
+Rule = "@{{ AwfulAi }}" $Reason = T $ForceHide
 
-Rule FoulLanguage = "fuck(ing)?( {{ EnglishPersonalPronouns }})?|idiot" $Reason = Fl $ForceBlocking
-
-Attr EnableOn = VideoBullet, LiveBullet
-
-Rule = "^{\{ SpecialFloatNumber }}$" $Reason = T
-Rule = "^{{ SpecialFloatNumber }}\+?$" $Reason = nooooooo! $forceblocking=false
-
-Attr EnableOn = RecommendedVideo
-
-Rule = "为(什么|何)" $Reason = Al
-`))
+Attr EnableOn = VideoBullet, LivestreamBullet
+Rule = "([好豪太][烫热早])+" $Reason = T $ForceBlocking
+Rule = "^([来看好]|这么)[早完晚]了?" $Reason = T
+Rule = "^(好?[烫冷凉热]+手?|热乎)$" $Reason = T
+Rule = "^第{{ SpecialIntNumber }}个?[看康][玩丸完]" $Reason = T $ForceBlocking
+Rule = "[前钱]排" $Reason = T $ForceBlocking
+Rule = "^(暂停|截图)(成功|失败|学表情)$" $Reason = T
+Rule = "我?出息了.?" $Reason = T $ForceBlocking
+Rule = "({{ \d+ }}|.{1,3}时代|前来)考古" $Reason = T $ForceBlocking
+Charset One = [一1①１]
+Rule = "热{{ One }}?热还能吃" $Reason = T $ForceBlocking
+Rule = "^刚刚$" $Reason = T
+Rule = "^(最|比?较)([早晚爱好]|喜欢|好看)的?{{ One }}[集次期]$" $Reason = T
+Charset NumberPlus = {{ SpecialFloatNumber }}[\+加＋架多]?
+Rule = "^{{ NumberPlus }}$" $Reason = T
+Rule = "^[<《]?{{ NumberPlus }}[》>]?$" $Reason = T
+Rule = "^{{ NumberPlus }}[个的号](人|粉丝?|硬?币|点?赞|)" $Reason = T $ForceBlocking
+Rule = "{{ NumberPlus }}[个的号]?(人|粉丝?)?([在再]看|(你们|大家)好|合影|([给和]我)?(出来|[看康])|(别|不要)再?躲了)" $Reason = T $ForceBlocking
+Rule = "屏蔽" $Reason = Lous $ForceBlocking $Regexless
+Rule = "高能" $Reason = T $ForceBlocking $Regexless
+Rule = "(◣◥)+(danger|drangr|warning)?" $Reason = T $ForceBlocking
+Rule = "^借[你您]吉言$" $Reason = T $ForceBlocking
+Rule = "此生无悔|来世[愿原]做" $Reason = T $ForceBlocking
+Rule = "^(你品)?.?你细?品$" $Reason = Lous
+Rule = "^oh{2,}$" $Reason = T
+Rule = "空[平瓶屏贫凭]" $Reason = T $ForceBlocking
+Rule = "举[报办]" $Reason = Al $ForceBlocking
+Rule = "弹幕礼仪" $Reason = Lous $ForceBlocking $Regexless
+Rule = "保护" $Reason = T $ForceBlocking $Regexless
+Rule = "(请|不[愿想]?看|马上|快点?)([滚滾]蛋?|撤退?|离开|走|右上角?)|散了吧?|洗洗睡|不喜欢?([别勿]|不要)" $Reason = Lous, O $ForceBlocking
+Rule = "引战|闭嘴|打脸|素质|[键鍵][盘盤](侠|大手|斗士|[黨党])|喷子|吵架|[撕逼b][逼b]" $Reason = O, Fl $ForceBlocking
+Rule = "[火][前钳]|[流留刘][名铭明]|要火|万火留" $Reason = T $ForceBlocking
+Rule = "[由有]我来?[组租]成" $Reason = T $ForceBlocking
+Rule = "^(.+[—\-_]*)+$" $Reason = T
+Rule = "完结.*[撒撤散]花" $Reason = T $ForceBlocking
+Rule = "某些?人|有些人" $Reason = 通常的讽刺隐喻 $ForceBlocking
+Rule = "非战斗人员.*([迅讯快]速|马上)撤离|fbi ?warning|不是演习" $Reason = T $ForceBlocking
+Rule = "小鬼" $Reason = Ms, Al $Regexless
+Rule = "ጿኈቼዽጿ" $Reason = T $ForceBlocking $Regexless
+Rule = "架好机枪，准备战斗" $Reason = T, Ooc
+Rule = "▄︻┻┳═一" $Reason = T $ForceBlocking $Regexless
+Rule = "■{3,}" $Reason = T $ForceBlocking $Regexless`)))
 
     class BilibiliRouter {
         isMainDomain() {
@@ -1232,6 +1331,7 @@ Rule = "为(什么|何)" $Reason = Al
                 border-radius: 50%;
                 transition-duration: 0.2s;
                 background-color: transparent;
+                border: none;
             }
             .${CLASSNAME_FLAGS.titleCont} button i {
                 font-size: 1.2rem;

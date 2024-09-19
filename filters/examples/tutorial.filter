@@ -117,6 +117,7 @@
 # | `Reason` | `Group<String>` | `<None>` | Why this rule block? |
 # | `ForceBlocking` | `Boolean` | `False` | Determine whether it ignores user setting `replaceBlockingWordsToSymbols`. |
 # | `ForceHide` | `Boolean` | `False` | This flag will works if user setting `replaceBlockingWordsToSymbols` is enabled, it will hide blocking words directly instead of replace them to `*`. |
+# | `Platform` | `Group<String>` | `<None>` | Besides `Attr Platform`, what platforms else will apply on?<br>You can start with `!` such as `!Steam`, it means that platform will not apply this rule. |
 # | `EnableOn` | `Group<String>` | `<None>` | Besides `Attr EnableOn`, what pages else will apply on?<br>You can start with `!` such as `!VideoComment`, it means that page will not apply this rule. |
 # | `Regexless` | `Boolean` | `False` | Do not use Regex when filtering. |
 # | `SecondaryMatching` | `Boolean` | `True` | Do not pass to secondary matching.<br>What is secondary matching? A lot of "low-IQ kids" try to insert blanks or punctuation marks between characters to emphasize their words or just want to prevent being blocked, secondary matching will remove these characters and compare them with rules again, to destroy their dreams! |
